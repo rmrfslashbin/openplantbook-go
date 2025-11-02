@@ -1,0 +1,56 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0, then switches to [Calendar Versioning](https://calver.org/).
+
+## [Unreleased]
+
+## [0.1.0] - 2025-11-02
+
+### Added
+- Initial release of OpenPlantbook Go SDK
+- Dual authentication support (API Key and OAuth2 Client Credentials)
+- Plant search API with configurable options (limit, user plants filter)
+- Plant details API with language support
+- Intelligent caching system with pluggable interface
+  - In-memory cache with TTL support (1h for search, 24h for details)
+  - NoOp cache for disabling caching
+- Client-side rate limiting (200 requests/day default, configurable)
+- Comprehensive error handling with typed errors
+  - `ErrUnauthorized` - Invalid credentials
+  - `ErrRateLimitExceeded` - Rate limit exceeded
+  - `ErrNotFound` - Plant not found
+  - `ErrNoAuthProvided` - Missing authentication
+  - `ErrMultipleAuthMethods` - Multiple auth methods provided
+- Full `context.Context` support for cancellation and timeouts
+- Functional options pattern for client configuration
+- Optional logging interface for debugging
+- Command-line interface (CLI) tool
+  - Search command with limit and JSON output
+  - Details command with language support
+  - Version information with build metadata
+- Comprehensive test suite with 90.5% coverage
+  - Table-driven tests
+  - Mock HTTP servers
+  - Race detector clean
+- Complete documentation
+  - Package-level godoc
+  - Detailed README with examples
+  - CLI documentation
+  - Three working examples (basic search, plant details, caching demo)
+
+### Dependencies
+- `golang.org/x/oauth2` v0.32.0 - OAuth2 implementation
+- `golang.org/x/time` v0.14.0 - Rate limiting
+
+### Configuration
+- Environment variable support for authentication
+- Custom HTTP client support
+- Configurable base URL
+- Configurable rate limits
+- Optional debug logging
+
+[Unreleased]: https://github.com/rmrfslashbin/openplantbook-go/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/rmrfslashbin/openplantbook-go/releases/tag/v0.1.0
