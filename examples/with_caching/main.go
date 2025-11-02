@@ -67,7 +67,8 @@ func main() {
 	// Demonstrate cache clearing
 	fmt.Println("=== Clearing Cache ===")
 	cache.Clear()
-	fmt.Println("Cache cleared successfully\n")
+	fmt.Println("Cache cleared successfully")
+	fmt.Println()
 
 	// Fourth request - will hit the API again
 	fmt.Println("=== Fourth Request (API call after clear) ===")
