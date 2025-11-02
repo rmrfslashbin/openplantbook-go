@@ -4,10 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"log/slog"
 	"os"
+	"strings"
 	"text/tabwriter"
+
+	"github.com/joho/godotenv"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	openplantbook "github.com/rmrfslashbin/openplantbook-go"
 )
@@ -16,166 +20,230 @@ var (
 	version = "dev"
 	commit  = "unknown"
 	date    = "unknown"
+
+	cfgFile string
 )
 
-type Config struct {
-	APIKey       string
-	ClientID     string
-	ClientSecret string
-	BaseURL      string
-	Debug        bool
-}
-
 func main() {
-	if len(os.Args) < 2 {
-		printUsage()
-		os.Exit(1)
-	}
-
-	command := os.Args[1]
-
-	switch command {
-	case "version", "-v", "--version":
-		printVersion()
-	case "search":
-		runSearch()
-	case "details":
-		runDetails()
-	case "help", "-h", "--help":
-		printHelp()
-	default:
-		fmt.Fprintf(os.Stderr, "Unknown command: %s\n\n", command)
-		printUsage()
+	if err := newRootCmd().Execute(); err != nil {
 		os.Exit(1)
 	}
 }
 
-func runSearch() {
-	if len(os.Args) < 3 {
-		fmt.Fprintln(os.Stderr, "Usage: openplantbook search <query> [--limit N] [--json]")
-		os.Exit(1)
+func newRootCmd() *cobra.Command {
+	rootCmd := &cobra.Command{
+		Use:   "openplantbook",
+		Short: "OpenPlantbook CLI - Plant care information from the command line",
+		Long: `OpenPlantbook CLI provides access to the OpenPlantbook API,
+a crowd-sourced database of plant care information.
+
+Get your free API credentials at: https://open.plantbook.io/`,
+		SilenceUsage: true,
 	}
 
-	query := os.Args[2]
-	limit := 10
-	jsonOutput := false
+	// Global flags
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.openplantbook.yaml)")
+	rootCmd.PersistentFlags().String("api-key", "", "OpenPlantbook API key")
+	rootCmd.PersistentFlags().String("client-id", "", "OAuth2 client ID")
+	rootCmd.PersistentFlags().String("client-secret", "", "OAuth2 client secret")
+	rootCmd.PersistentFlags().String("base-url", "", "API base URL (default: https://open.plantbook.io/api/v1)")
+	rootCmd.PersistentFlags().Bool("debug", false, "Enable debug logging")
 
-	// Parse flags
-	for i := 3; i < len(os.Args); i++ {
-		switch os.Args[i] {
-		case "--limit":
-			if i+1 < len(os.Args) {
-				fmt.Sscanf(os.Args[i+1], "%d", &limit)
-				i++
-			}
-		case "--json":
-			jsonOutput = true
+	// Bind flags to viper
+	viper.BindPFlag("api-key", rootCmd.PersistentFlags().Lookup("api-key"))
+	viper.BindPFlag("client-id", rootCmd.PersistentFlags().Lookup("client-id"))
+	viper.BindPFlag("client-secret", rootCmd.PersistentFlags().Lookup("client-secret"))
+	viper.BindPFlag("base-url", rootCmd.PersistentFlags().Lookup("base-url"))
+	viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug"))
+
+	// Add commands
+	rootCmd.AddCommand(newSearchCmd())
+	rootCmd.AddCommand(newDetailsCmd())
+	rootCmd.AddCommand(newVersionCmd())
+
+	cobra.OnInitialize(initConfig)
+
+	return rootCmd
+}
+
+func initConfig() {
+	// Load .env file if it exists (silently ignore if not found)
+	_ = godotenv.Load()
+
+	// Read from environment variables
+	viper.SetEnvPrefix("OPENPLANTBOOK")
+	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+	viper.AutomaticEnv()
+
+	// Read config file if specified or search for it
+	if cfgFile != "" {
+		// Use config file from the flag
+		viper.SetConfigFile(cfgFile)
+		if err := viper.ReadInConfig(); err != nil {
+			fmt.Fprintf(os.Stderr, "Error reading config file: %v\n", err)
+		} else if viper.GetBool("debug") {
+			fmt.Fprintf(os.Stderr, "Using config file: %s\n", viper.ConfigFileUsed())
+		}
+	} else {
+		// Search for config in home directory
+		home, err := os.UserHomeDir()
+		if err == nil {
+			viper.AddConfigPath(home)
+		}
+
+		// Also search in current directory
+		viper.AddConfigPath(".")
+		viper.SetConfigName(".openplantbook")
+		viper.SetConfigType("yaml")
+
+		// Try to read config file (ignore error if not found)
+		if err := viper.ReadInConfig(); err == nil && viper.GetBool("debug") {
+			fmt.Fprintf(os.Stderr, "Using config file: %s\n", viper.ConfigFileUsed())
 		}
 	}
-
-	config := loadConfig()
-	client, err := createClient(config)
-	if err != nil {
-		log.Fatalf("Failed to create client: %v", err)
-	}
-
-	results, err := client.SearchPlants(context.Background(), query, &openplantbook.SearchOptions{
-		Limit: limit,
-	})
-	if err != nil {
-		log.Fatalf("Search failed: %v", err)
-	}
-
-	if jsonOutput {
-		outputJSON(results)
-	} else {
-		outputSearchResults(results)
-	}
 }
 
-func runDetails() {
-	if len(os.Args) < 3 {
-		fmt.Fprintln(os.Stderr, "Usage: openplantbook details <pid> [--lang LANG] [--json]")
-		os.Exit(1)
-	}
+func newSearchCmd() *cobra.Command {
+	var (
+		limit      int
+		userPlants bool
+		jsonOutput bool
+	)
 
-	pid := os.Args[2]
-	lang := "en"
-	jsonOutput := false
+	cmd := &cobra.Command{
+		Use:   "search <query>",
+		Short: "Search for plants by name or alias",
+		Long: `Search for plants by common name or scientific name.
 
-	// Parse flags
-	for i := 3; i < len(os.Args); i++ {
-		switch os.Args[i] {
-		case "--lang":
-			if i+1 < len(os.Args) {
-				lang = os.Args[i+1]
-				i++
+Examples:
+  openplantbook search monstera
+  openplantbook search fern --limit 5
+  openplantbook search monstera --json`,
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			query := args[0]
+
+			client, err := createClient()
+			if err != nil {
+				return fmt.Errorf("failed to create client: %w", err)
 			}
-		case "--json":
-			jsonOutput = true
-		}
+
+			results, err := client.SearchPlants(context.Background(), query, &openplantbook.SearchOptions{
+				Limit:      limit,
+				UserPlants: userPlants,
+			})
+			if err != nil {
+				return fmt.Errorf("search failed: %w", err)
+			}
+
+			if jsonOutput {
+				return outputJSON(results)
+			}
+
+			return outputSearchResults(results)
+		},
 	}
 
-	config := loadConfig()
-	client, err := createClient(config)
-	if err != nil {
-		log.Fatalf("Failed to create client: %v", err)
+	cmd.Flags().IntVar(&limit, "limit", 10, "Maximum number of results to return")
+	cmd.Flags().BoolVar(&userPlants, "user-plants", false, "Include user-contributed plants")
+	cmd.Flags().BoolVar(&jsonOutput, "json", false, "Output results as JSON")
+
+	return cmd
+}
+
+func newDetailsCmd() *cobra.Command {
+	var (
+		language   string
+		jsonOutput bool
+	)
+
+	cmd := &cobra.Command{
+		Use:   "details <pid>",
+		Short: "Get detailed care information for a plant",
+		Long: `Retrieve detailed care information for a specific plant by its PID.
+
+Examples:
+  openplantbook details monstera-deliciosa
+  openplantbook details monstera-deliciosa --lang es
+  openplantbook details monstera-deliciosa --json`,
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			pid := args[0]
+
+			client, err := createClient()
+			if err != nil {
+				return fmt.Errorf("failed to create client: %w", err)
+			}
+
+			details, err := client.GetPlantDetails(context.Background(), pid, &openplantbook.DetailOptions{
+				Language: language,
+			})
+			if err != nil {
+				return fmt.Errorf("failed to get details: %w", err)
+			}
+
+			if jsonOutput {
+				return outputJSON(details)
+			}
+
+			return outputPlantDetails(details)
+		},
 	}
 
-	details, err := client.GetPlantDetails(context.Background(), pid, &openplantbook.DetailOptions{
-		Language: lang,
-	})
-	if err != nil {
-		log.Fatalf("Failed to get details: %v", err)
-	}
+	cmd.Flags().StringVar(&language, "lang", "en", "Language code (ISO 639-1)")
+	cmd.Flags().BoolVar(&jsonOutput, "json", false, "Output results as JSON")
 
-	if jsonOutput {
-		outputJSON(details)
-	} else {
-		outputPlantDetails(details)
+	return cmd
+}
+
+func newVersionCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "version",
+		Short: "Show version information",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("openplantbook version %s\n", version)
+			fmt.Printf("  commit: %s\n", commit)
+			fmt.Printf("  built:  %s\n", date)
+		},
 	}
 }
 
-func loadConfig() Config {
-	return Config{
-		APIKey:       os.Getenv("OPENPLANTBOOK_API_KEY"),
-		ClientID:     os.Getenv("OPENPLANTBOOK_CLIENT_ID"),
-		ClientSecret: os.Getenv("OPENPLANTBOOK_CLIENT_SECRET"),
-		BaseURL:      os.Getenv("OPENPLANTBOOK_BASE_URL"),
-		Debug:        os.Getenv("OPENPLANTBOOK_DEBUG") == "true",
-	}
-}
-
-func createClient(config Config) (*openplantbook.Client, error) {
+func createClient() (*openplantbook.Client, error) {
 	opts := []openplantbook.Option{}
 
-	// Authentication
-	if config.APIKey != "" {
-		opts = append(opts, openplantbook.WithAPIKey(config.APIKey))
-	} else if config.ClientID != "" && config.ClientSecret != "" {
-		opts = append(opts, openplantbook.WithOAuth2(config.ClientID, config.ClientSecret))
+	// Authentication - check for API key first, then OAuth2
+	apiKey := viper.GetString("api-key")
+	clientID := viper.GetString("client-id")
+	clientSecret := viper.GetString("client-secret")
+
+	if apiKey != "" {
+		opts = append(opts, openplantbook.WithAPIKey(apiKey))
+	} else if clientID != "" && clientSecret != "" {
+		opts = append(opts, openplantbook.WithOAuth2(clientID, clientSecret))
 	} else {
 		return nil, fmt.Errorf("no authentication provided: set OPENPLANTBOOK_API_KEY or OPENPLANTBOOK_CLIENT_ID/CLIENT_SECRET")
 	}
 
 	// Optional base URL override
-	if config.BaseURL != "" {
-		opts = append(opts, openplantbook.WithBaseURL(config.BaseURL))
+	if baseURL := viper.GetString("base-url"); baseURL != "" {
+		opts = append(opts, openplantbook.WithBaseURL(baseURL))
 	}
 
 	// Debug logging
-	if config.Debug {
-		logger := &cliLogger{slog.New(slog.NewTextHandler(os.Stderr, nil))}
+	if viper.GetBool("debug") {
+		logger := &cliLogger{slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		}))}
 		opts = append(opts, openplantbook.WithLogger(logger))
 	}
 
 	return openplantbook.New(opts...)
 }
 
-func outputSearchResults(results []openplantbook.PlantSearchResult) {
+func outputSearchResults(results []openplantbook.PlantSearchResult) error {
 	if len(results) == 0 {
 		fmt.Println("No plants found")
-		return
+		return nil
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
@@ -186,9 +254,10 @@ func outputSearchResults(results []openplantbook.PlantSearchResult) {
 	}
 	w.Flush()
 	fmt.Printf("\nFound %d plant(s)\n", len(results))
+	return nil
 }
 
-func outputPlantDetails(details *openplantbook.PlantDetails) {
+func outputPlantDetails(details *openplantbook.PlantDetails) error {
 	fmt.Printf("Plant: %s\n", details.DisplayPID)
 	fmt.Printf("Common Name: %s\n", details.Alias)
 	fmt.Printf("PID: %s\n", details.PID)
@@ -205,83 +274,13 @@ func outputPlantDetails(details *openplantbook.PlantDetails) {
 	if details.ImageURL != "" {
 		fmt.Printf("\nImage: %s\n", details.ImageURL)
 	}
+	return nil
 }
 
-func outputJSON(v interface{}) {
+func outputJSON(v interface{}) error {
 	encoder := json.NewEncoder(os.Stdout)
 	encoder.SetIndent("", "  ")
-	if err := encoder.Encode(v); err != nil {
-		log.Fatalf("Failed to encode JSON: %v", err)
-	}
-}
-
-func printVersion() {
-	fmt.Printf("openplantbook version %s\n", version)
-	fmt.Printf("  commit: %s\n", commit)
-	fmt.Printf("  built:  %s\n", date)
-}
-
-func printUsage() {
-	fmt.Fprintf(os.Stderr, `Usage: openplantbook <command> [options]
-
-Commands:
-  search <query>    Search for plants by name
-  details <pid>     Get detailed plant information
-  version           Show version information
-  help              Show this help message
-
-Run 'openplantbook <command> --help' for command-specific options.
-`)
-}
-
-func printHelp() {
-	fmt.Printf(`OpenPlantbook CLI - Plant care information from the command line
-
-USAGE:
-  openplantbook <command> [options]
-
-COMMANDS:
-  search <query>         Search for plants by name or alias
-    --limit N            Limit results to N plants (default: 10)
-    --json               Output results as JSON
-
-  details <pid>          Get detailed care information for a plant
-    --lang LANG          Specify language (ISO 639-1 code, default: en)
-    --json               Output results as JSON
-
-  version                Show version information
-  help                   Show this help message
-
-AUTHENTICATION:
-  API Key (recommended for simple use):
-    export OPENPLANTBOOK_API_KEY="your-api-key"
-
-  OAuth2 (for full API access):
-    export OPENPLANTBOOK_CLIENT_ID="your-client-id"
-    export OPENPLANTBOOK_CLIENT_SECRET="your-client-secret"
-
-CONFIGURATION:
-  OPENPLANTBOOK_BASE_URL    Override API base URL
-  OPENPLANTBOOK_DEBUG=true  Enable debug logging
-
-EXAMPLES:
-  # Search for plants
-  openplantbook search monstera
-
-  # Search with limit
-  openplantbook search fern --limit 5
-
-  # Get plant details
-  openplantbook details monstera-deliciosa
-
-  # Get details in Spanish
-  openplantbook details monstera-deliciosa --lang es
-
-  # Output as JSON for scripting
-  openplantbook search monstera --json | jq '.[] | .pid'
-
-For more information, visit: https://github.com/rmrfslashbin/openplantbook-go
-`)
+	return encoder.Encode(v)
 }
 
 // cliLogger implements the openplantbook.Logger interface
