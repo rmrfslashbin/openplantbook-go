@@ -7,12 +7,26 @@
 #
 # Usage:
 #   cp .openplantbook.example.yaml ~/.openplantbook.yaml
-#   edit ~/.openplantbook.yaml with your credentials
+#   edit ~/.openplantbook.yaml with your credentials (choose ONE auth method)
 #   openplantbook search monstera
 
-# OpenPlantbook API credentials (REQUIRED)
-client_id: "your_client_id_here"
-client_secret: "your_client_secret_here"
+# ==============================================================================
+# AUTHENTICATION - Choose ONE method:
+# ==============================================================================
+
+# Method 1: API Key Authentication (RECOMMENDED - Simpler)
+# Single credential, never expires, covers search & details
+api_key: "your_api_key_here"
+
+# Method 2: OAuth2 Client Credentials (Full API Access)
+# Two credentials, time-limited tokens, required for write operations
+# NOTE: Comment out api_key above if using OAuth2
+# client_id: "your_client_id_here"
+# client_secret: "your_client_secret_here"
+
+# ==============================================================================
+# Optional Configuration
+# ==============================================================================
 
 # Output format: json, yaml, or table (default: table)
 format: "table"

@@ -28,6 +28,8 @@ go get github.com/rmrfslashbin/openplantbook-go
 
 ## Quick Start
 
+### API Key Authentication (Recommended)
+
 ```go
 package main
 
@@ -40,10 +42,9 @@ import (
 )
 
 func main() {
-    // Create client
+    // Create client with API key (simpler)
     client, err := openplantbook.New(
-        "your-client-id",
-        "your-client-secret",
+        openplantbook.WithAPIKey("your-api-key-here"),
     )
     if err != nil {
         log.Fatal(err)
@@ -64,6 +65,15 @@ func main() {
     fmt.Printf("Plant: %s\n", details.Alias)
     fmt.Printf("Temperature: %.1f-%.1f°C\n", details.MinTemp, details.MaxTemp)
 }
+```
+
+### OAuth2 Authentication (Full API Access)
+
+```go
+// Create client with OAuth2 (for write operations)
+client, err := openplantbook.New(
+    openplantbook.WithOAuth2("client-id", "client-secret"),
+)
 ```
 
 ## API Credentials
