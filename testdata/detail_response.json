@@ -1,0 +1,17 @@
+{
+  "pid": "monstera-deliciosa",
+  "display_pid": "Monstera deliciosa",
+  "alias": "Monstera",
+  "max_light_lux": 20000,
+  "min_light_lux": 2500,
+  "max_temp": 30.0,
+  "min_temp": 15.0,
+  "max_env_humid": 80,
+  "min_env_humid": 40,
+  "max_soil_moist": 60,
+  "min_soil_moist": 15,
+  "max_soil_ec": 2000,
+  "min_soil_ec": 350,
+  "image_url": "https://example.com/monstera.jpg",
+  "category": "Houseplant"
+}
