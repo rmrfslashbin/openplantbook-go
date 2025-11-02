@@ -1,0 +1,24 @@
+# OpenPlantbook CLI Configuration Example
+#
+# Copy this file to ~/.openplantbook.yaml and fill in your credentials
+# The .openplantbook.yaml file is git-ignored for security
+#
+# Get your credentials at: https://open.plantbook.io/apikey/show/
+#
+# Usage:
+#   cp .openplantbook.example.yaml ~/.openplantbook.yaml
+#   edit ~/.openplantbook.yaml with your credentials
+#   openplantbook search monstera
+
+# OpenPlantbook API credentials (REQUIRED)
+client_id: "your_client_id_here"
+client_secret: "your_client_secret_here"
+
+# Output format: json, yaml, or table (default: table)
+format: "table"
+
+# Log level: debug, info, warn, error (default: info)
+log_level: "info"
+
+# Disable caching (default: false)
+# no_cache: false
