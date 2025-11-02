@@ -1,14 +1,19 @@
-[
-  {
-    "pid": "monstera-deliciosa",
-    "display_pid": "Monstera deliciosa",
-    "alias": "Monstera",
-    "category": "Houseplant"
-  },
-  {
-    "pid": "monstera-adansonii",
-    "display_pid": "Monstera adansonii",
-    "alias": "Swiss Cheese Vine",
-    "category": "Houseplant"
-  }
-]
+{
+  "count": 2,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "pid": "monstera-deliciosa",
+      "display_pid": "Monstera deliciosa",
+      "alias": "Monstera",
+      "category": "Houseplant"
+    },
+    {
+      "pid": "monstera-adansonii",
+      "display_pid": "Monstera adansonii",
+      "alias": "Swiss Cheese Vine",
+      "category": "Houseplant"
+    }
+  ]
+}

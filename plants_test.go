@@ -140,7 +140,7 @@ func TestClient_SearchPlants_Caching(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		callCount++
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`[{"pid":"test","display_pid":"Test","alias":"Test Plant","category":"Test"}]`))
+		w.Write([]byte(`{"count":1,"next":null,"previous":null,"results":[{"pid":"test","display_pid":"Test","alias":"Test Plant","category":"Test"}]}`))
 	}))
 	defer server.Close()
 
@@ -233,7 +233,7 @@ func TestClient_GetPlantDetails(t *testing.T) {
 				}
 
 				if tt.pid != "" {
-					expectedPath := "/plant/detail/" + tt.pid + "/"
+					expectedPath := "/plant/detail/" + tt.pid
 					if r.URL.Path != expectedPath {
 						t.Errorf("expected path %s, got %s", expectedPath, r.URL.Path)
 					}
@@ -335,7 +335,7 @@ func TestClient_RateLimiting(t *testing.T) {
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`[]`))
+		w.Write([]byte(`{"count":0,"next":null,"previous":null,"results":[]}`))
 	}))
 	defer server.Close()
 
@@ -381,7 +381,7 @@ func TestClient_ContextCancellation(t *testing.T) {
 		// Delay response
 		time.Sleep(100 * time.Millisecond)
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`[]`))
+		w.Write([]byte(`{"count":0,"next":null,"previous":null,"results":[]}`))
 	}))
 	defer server.Close()
 

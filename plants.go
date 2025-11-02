@@ -34,7 +34,7 @@ func (c *Client) SearchPlants(ctx context.Context, query string, opts *SearchOpt
 	}
 
 	// Build request
-	req, err := c.newRequest(ctx, "GET", "/plant/search/", nil)
+	req, err := c.newRequest(ctx, "GET", "/plant/search", nil)
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
 	}
@@ -54,19 +54,19 @@ func (c *Client) SearchPlants(ctx context.Context, query string, opts *SearchOpt
 	req.URL.RawQuery = q.Encode()
 
 	// Execute request
-	var results []PlantSearchResult
-	if err := c.doRequest(ctx, req, &results); err != nil {
+	var response searchResponse
+	if err := c.doRequest(ctx, req, &response); err != nil {
 		return nil, fmt.Errorf("search plants: %w", err)
 	}
 
-	c.log("search completed", "query", query, "results", len(results))
+	c.log("search completed", "query", query, "results", len(response.Results))
 
 	// Cache results (1 hour TTL)
-	if data, err := json.Marshal(results); err == nil {
+	if data, err := json.Marshal(response.Results); err == nil {
 		c.cache.Set(cacheKey, data, 1*time.Hour)
 	}
 
-	return results, nil
+	return response.Results, nil
 }
 
 // GetPlantDetails retrieves detailed plant care information
@@ -93,7 +93,7 @@ func (c *Client) GetPlantDetails(ctx context.Context, pid string, opts *DetailOp
 	}
 
 	// Build request
-	path := fmt.Sprintf("/plant/detail/%s/", pid)
+	path := fmt.Sprintf("/plant/detail/%s", pid)
 	req, err := c.newRequest(ctx, "GET", path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
