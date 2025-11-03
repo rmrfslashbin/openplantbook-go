@@ -3,6 +3,11 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/rmrfslashbin/openplantbook-go.svg)](https://pkg.go.dev/github.com/rmrfslashbin/openplantbook-go)
 [![Go Report Card](https://goreportcard.com/badge/github.com/rmrfslashbin/openplantbook-go)](https://goreportcard.com/report/github.com/rmrfslashbin/openplantbook-go)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/rmrfslashbin/openplantbook-go)](https://go.dev/)
+[![Release](https://img.shields.io/github/v/release/rmrfslashbin/openplantbook-go)](https://github.com/rmrfslashbin/openplantbook-go/releases)
+[![Coverage](https://img.shields.io/badge/coverage-90.6%25-brightgreen)](https://github.com/rmrfslashbin/openplantbook-go)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/rmrfslashbin/openplantbook-go)
+[![Code Quality](https://img.shields.io/badge/code%20quality-A+-brightgreen)](https://github.com/rmrfslashbin/openplantbook-go)
 
 A production-ready Go client library for the [OpenPlantbook API](https://open.plantbook.io), providing access to a crowd-sourced database of plant care information.
 
