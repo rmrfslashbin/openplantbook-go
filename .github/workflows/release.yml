@@ -30,23 +30,35 @@ jobs:
         # Create bin directory
         mkdir -p bin
 
+        # Extract version from tag (remove 'v' prefix)
+        VERSION=${GITHUB_REF#refs/tags/v}
+
+        # Get git commit hash
+        COMMIT=$(git rev-parse --short HEAD)
+
+        # Get build date
+        BUILD_DATE=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+
+        # Set ldflags with version info
+        LDFLAGS="-s -w -X main.version=v${VERSION} -X main.commit=${COMMIT} -X main.date=${BUILD_DATE}"
+
         # Build for all supported platforms
         # macOS
-        GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w" -o bin/openplantbook-darwin-amd64 ./cmd/openplantbook
-        GOOS=darwin GOARCH=arm64 go build -ldflags "-s -w" -o bin/openplantbook-darwin-arm64 ./cmd/openplantbook
+        GOOS=darwin GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o bin/openplantbook-darwin-amd64 ./cmd/openplantbook
+        GOOS=darwin GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o bin/openplantbook-darwin-arm64 ./cmd/openplantbook
 
         # Linux
-        GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o bin/openplantbook-linux-amd64 ./cmd/openplantbook
-        GOOS=linux GOARCH=arm64 go build -ldflags "-s -w" -o bin/openplantbook-linux-arm64 ./cmd/openplantbook
-        GOOS=linux GOARCH=arm GOARM=7 go build -ldflags "-s -w" -o bin/openplantbook-linux-armv7 ./cmd/openplantbook
+        GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o bin/openplantbook-linux-amd64 ./cmd/openplantbook
+        GOOS=linux GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o bin/openplantbook-linux-arm64 ./cmd/openplantbook
+        GOOS=linux GOARCH=arm GOARM=7 go build -ldflags "${LDFLAGS}" -o bin/openplantbook-linux-armv7 ./cmd/openplantbook
 
         # Windows
-        GOOS=windows GOARCH=amd64 go build -ldflags "-s -w" -o bin/openplantbook-windows-amd64.exe ./cmd/openplantbook
-        GOOS=windows GOARCH=arm64 go build -ldflags "-s -w" -o bin/openplantbook-windows-arm64.exe ./cmd/openplantbook
+        GOOS=windows GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o bin/openplantbook-windows-amd64.exe ./cmd/openplantbook
+        GOOS=windows GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o bin/openplantbook-windows-arm64.exe ./cmd/openplantbook
 
         # FreeBSD
-        GOOS=freebsd GOARCH=amd64 go build -ldflags "-s -w" -o bin/openplantbook-freebsd-amd64 ./cmd/openplantbook
-        GOOS=freebsd GOARCH=arm64 go build -ldflags "-s -w" -o bin/openplantbook-freebsd-arm64 ./cmd/openplantbook
+        GOOS=freebsd GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o bin/openplantbook-freebsd-amd64 ./cmd/openplantbook
+        GOOS=freebsd GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o bin/openplantbook-freebsd-arm64 ./cmd/openplantbook
 
     - name: Create checksums
       run: |

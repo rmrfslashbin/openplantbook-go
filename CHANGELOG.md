@@ -7,7 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.3] - 2025-11-03
+
+### Fixed
+- Release workflow now properly embeds version information in CLI binaries via ldflags
+- CLI `version` command now shows correct version, commit hash, and build date in release binaries
+
 ## [1.1.2] - 2025-11-03
+
+### Added
+- CLI `version` command now displays both CLI and SDK versions for transparency
 
 ### Fixed
 - Version constant now correctly reflects the release version (was "1.1.0", now "1.1.2")
