@@ -11,6 +11,53 @@ import (
 	"golang.org/x/time/rate"
 )
 
+// mockSearchHandler creates a test server handler for search tests
+func mockSearchHandler(t *testing.T, query string, opts *SearchOptions, status int, response string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Verify request method
+		if r.Method != "GET" {
+			t.Errorf("expected GET request, got %s", r.Method)
+		}
+
+		// Verify query parameter if query is not empty
+		if query != "" {
+			queryParam := r.URL.Query().Get("alias")
+			if queryParam != query {
+				t.Errorf("expected query=%s, got %s", query, queryParam)
+			}
+
+			// Verify limit parameter if opts is set
+			if opts != nil && opts.Limit > 0 {
+				limitParam := r.URL.Query().Get("limit")
+				if limitParam == "" {
+					t.Error("expected limit parameter")
+				}
+			}
+		}
+
+		w.WriteHeader(status)
+		w.Write([]byte(response))
+	}
+}
+
+// verifySearchResults checks the search results match expectations
+func verifySearchResults(t *testing.T, results []PlantSearchResult, wantResults int) {
+	if len(results) != wantResults {
+		t.Errorf("SearchPlants() got %d results, want %d", len(results), wantResults)
+	}
+
+	// Verify result structure for non-empty results
+	if len(results) > 0 {
+		first := results[0]
+		if first.PID == "" {
+			t.Error("result PID is empty")
+		}
+		if first.Alias == "" {
+			t.Error("result Alias is empty")
+		}
+	}
+}
+
 func TestClient_SearchPlants(t *testing.T) {
 	// Load test fixture
 	searchData, err := os.ReadFile("testdata/search_response.json")
@@ -67,30 +114,9 @@ func TestClient_SearchPlants(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create mock server
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				// Verify request
-				if r.Method != "GET" {
-					t.Errorf("expected GET request, got %s", r.Method)
-				}
-
-				if tt.query != "" {
-					queryParam := r.URL.Query().Get("alias")
-					if queryParam != tt.query {
-						t.Errorf("expected query=%s, got %s", tt.query, queryParam)
-					}
-
-					if tt.opts != nil && tt.opts.Limit > 0 {
-						limitParam := r.URL.Query().Get("limit")
-						if limitParam == "" {
-							t.Error("expected limit parameter")
-						}
-					}
-				}
-
-				w.WriteHeader(tt.mockStatus)
-				w.Write([]byte(tt.mockResponse))
-			}))
+			// Create mock server with handler
+			handler := mockSearchHandler(t, tt.query, tt.opts, tt.mockStatus, tt.mockResponse)
+			server := httptest.NewServer(handler)
 			defer server.Close()
 
 			// Create client
@@ -106,31 +132,19 @@ func TestClient_SearchPlants(t *testing.T) {
 			// Execute search
 			results, err := client.SearchPlants(context.Background(), tt.query, tt.opts)
 
-			// Check error
+			// Check error expectation
 			if (err != nil) != tt.wantErr {
 				t.Errorf("SearchPlants() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
+			// If error was expected, we're done
 			if tt.wantErr {
 				return
 			}
 
-			// Check results
-			if len(results) != tt.wantResults {
-				t.Errorf("SearchPlants() got %d results, want %d", len(results), tt.wantResults)
-			}
-
-			// Verify result structure
-			if len(results) > 0 {
-				first := results[0]
-				if first.PID == "" {
-					t.Error("result PID is empty")
-				}
-				if first.Alias == "" {
-					t.Error("result Alias is empty")
-				}
-			}
+			// Verify results
+			verifySearchResults(t, results, tt.wantResults)
 		})
 	}
 }
