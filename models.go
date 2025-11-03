@@ -10,10 +10,10 @@ type PlantSearchResult struct {
 
 // searchResponse wraps the paginated API response
 type searchResponse struct {
-	Count    int                  `json:"count"`
-	Next     *string              `json:"next"`
-	Previous *string              `json:"previous"`
-	Results  []PlantSearchResult  `json:"results"`
+	Count    int                 `json:"count"`
+	Next     *string             `json:"next"`
+	Previous *string             `json:"previous"`
+	Results  []PlantSearchResult `json:"results"`
 }
 
 // PlantDetails represents complete plant care information
