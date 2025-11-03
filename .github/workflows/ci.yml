@@ -38,13 +38,13 @@ jobs:
       run: go mod download
 
     - name: Run tests
-      run: go test -v -race -coverprofile=coverage.txt ./...
+      run: go test -v -race -coverprofile=cover.out ./...
 
     - name: Upload coverage to Codecov
       if: matrix.os == 'ubuntu-latest' && matrix.go == '1.24'
       uses: codecov/codecov-action@v4
       with:
-        file: ./coverage.txt
+        file: ./cover.out
         flags: unittests
         name: codecov-umbrella
 
