@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Public `Version` constant for SDK consumers to reference the library version
+- User-Agent header in HTTP requests for API tracking (`openplantbook-go/{version}`)
+
+## [1.1.0] - 2025-11-03
+
+### Added
+- Rate limit error behavior with `RateLimitBehavior` type and `WithRateLimitBehavior()` option
+- `RateLimitWait` behavior: blocks until rate limiter allows request (default)
+- `RateLimitError` behavior: returns error immediately when rate limited
+- `ErrRateLimited` error type with `RetryAfter` field
+- CLI PID normalization: accepts both hyphenated and space-separated formats
+
+### Fixed
+- CLI now accepts PIDs in both formats (e.g., "monstera-deliciosa" or "monstera deliciosa")
+- GitHub Actions workflow permissions added for security best practices
+- Field alignment in Client struct
+
+## [1.0.1] - 2025-11-03
+
+### Changed
+- Upgraded Go version requirement from 1.23 to 1.24
+- Updated `golang.org/x/oauth2` from v0.23.0 to v0.27.0 (fixes CVE-2025-22868)
+
+### Fixed
+- Windows CI test execution with bash shell
+- CI workflow Go version compatibility
+
 ## [0.1.0] - 2025-11-02
 
 ### Added

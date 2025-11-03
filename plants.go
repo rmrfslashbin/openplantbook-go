@@ -179,6 +179,7 @@ func (c *Client) newRequest(ctx context.Context, method, path string, body io.Re
 
 	// Set default headers
 	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", "openplantbook-go/"+Version)
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
