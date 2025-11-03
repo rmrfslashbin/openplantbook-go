@@ -1,8 +1,10 @@
 package openplantbook
 
 import (
+	"context"
 	"errors"
 	"net/http"
+	"strings"
 	"testing"
 )
 
@@ -286,5 +288,37 @@ func TestNew_WithLogger(t *testing.T) {
 	// Verify logging was called during auth setup
 	if logger.debugCalls == 0 {
 		t.Error("logger.Debug was not called during client creation")
+	}
+}
+
+func TestNew_InvalidBaseURL(t *testing.T) {
+	_, err := New(
+		WithAPIKey("test-key"),
+		WithBaseURL(""), // Empty base URL
+	)
+
+	if err == nil {
+		t.Error("expected error for empty base URL, got nil")
+	}
+}
+
+func TestNew_WithRequestBody(t *testing.T) {
+	// Test newRequest with body (for Content-Type header coverage)
+	client, err := New(
+		WithAPIKey("test-key"),
+		DisableRateLimit(),
+	)
+	if err != nil {
+		t.Fatalf("failed to create client: %v", err)
+	}
+
+	body := strings.NewReader(`{"test": "data"}`)
+	req, err := client.newRequest(context.Background(), "POST", "/test", body)
+	if err != nil {
+		t.Fatalf("newRequest() failed: %v", err)
+	}
+
+	if req.Header.Get("Content-Type") != "application/json" {
+		t.Error("Content-Type header not set for request with body")
 	}
 }
