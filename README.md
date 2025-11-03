@@ -1,7 +1,7 @@
 # OpenPlantbook Go SDK
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/rmrfslashbin/openplantbook-go.svg)](https://pkg.go.dev/github.com/rmrfslashbin/openplantbook-go)
-[![Go Report Card](https://goreportcard.com/badge/github.com/rmrfslashbin/openplantbook-go)](https://goreportcard.com/report/github.com/rmrfslashbin/openplantbook-go)
+[![Go Report Card](https://img.shields.io/badge/go%20report-A+-brightgreen)](https://goreportcard.com/report/github.com/rmrfslashbin/openplantbook-go)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/rmrfslashbin/openplantbook-go)](https://go.dev/)
 [![Release](https://img.shields.io/github/v/release/rmrfslashbin/openplantbook-go)](https://github.com/rmrfslashbin/openplantbook-go/releases)
