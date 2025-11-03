@@ -26,10 +26,33 @@ func (c *Client) SearchPlants(ctx context.Context, query string, opts *SearchOpt
 		}
 	}
 
-	// Wait for rate limiter
+	// Handle rate limiting based on configured behavior
 	if c.rateLimiter != nil {
-		if err := c.rateLimiter.Wait(ctx); err != nil {
-			return nil, fmt.Errorf("rate limit wait: %w", err)
+		if c.rateLimitBehavior == RateLimitError {
+			// Check if we can proceed without waiting
+			reservation := c.rateLimiter.Reserve()
+			if !reservation.OK() {
+				return nil, &ErrRateLimited{
+					RetryAfter: time.Now().Add(24 * time.Hour),
+					Message:    "rate limiter exhausted",
+				}
+			}
+
+			delay := reservation.Delay()
+			if delay > 0 {
+				// Cancel the reservation and return error
+				reservation.Cancel()
+				return nil, &ErrRateLimited{
+					RetryAfter: time.Now().Add(delay),
+					Message:    "rate limit exceeded, please retry later",
+				}
+			}
+			// If delay is 0, reservation is consumed and we can proceed
+		} else {
+			// Default behavior: wait for rate limiter
+			if err := c.rateLimiter.Wait(ctx); err != nil {
+				return nil, fmt.Errorf("rate limit wait: %w", err)
+			}
 		}
 	}
 
@@ -85,10 +108,33 @@ func (c *Client) GetPlantDetails(ctx context.Context, pid string, opts *DetailOp
 		}
 	}
 
-	// Wait for rate limiter
+	// Handle rate limiting based on configured behavior
 	if c.rateLimiter != nil {
-		if err := c.rateLimiter.Wait(ctx); err != nil {
-			return nil, fmt.Errorf("rate limit wait: %w", err)
+		if c.rateLimitBehavior == RateLimitError {
+			// Check if we can proceed without waiting
+			reservation := c.rateLimiter.Reserve()
+			if !reservation.OK() {
+				return nil, &ErrRateLimited{
+					RetryAfter: time.Now().Add(24 * time.Hour),
+					Message:    "rate limiter exhausted",
+				}
+			}
+
+			delay := reservation.Delay()
+			if delay > 0 {
+				// Cancel the reservation and return error
+				reservation.Cancel()
+				return nil, &ErrRateLimited{
+					RetryAfter: time.Now().Add(delay),
+					Message:    "rate limit exceeded, please retry later",
+				}
+			}
+			// If delay is 0, reservation is consumed and we can proceed
+		} else {
+			// Default behavior: wait for rate limiter
+			if err := c.rateLimiter.Wait(ctx); err != nil {
+				return nil, fmt.Errorf("rate limit wait: %w", err)
+			}
 		}
 	}
 

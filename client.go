@@ -17,13 +17,24 @@ const (
 	DefaultRateLimit = 200
 )
 
+// RateLimitBehavior defines how the client handles rate limiting
+type RateLimitBehavior int
+
+const (
+	// RateLimitWait blocks until the rate limiter allows the request (default)
+	RateLimitWait RateLimitBehavior = iota
+	// RateLimitError returns an error immediately when rate limited
+	RateLimitError
+)
+
 // Client represents an OpenPlantbook API client
 type Client struct {
-	httpClient  *http.Client
-	baseURL     string
-	rateLimiter *rate.Limiter
-	cache       Cache
-	logger      Logger
+	httpClient         *http.Client
+	baseURL            string
+	rateLimiter        *rate.Limiter
+	rateLimitBehavior  RateLimitBehavior
+	cache              Cache
+	logger             Logger
 
 	// Authentication (only ONE should be set)
 	apiKey       string
@@ -35,10 +46,11 @@ type Client struct {
 // Authentication is auto-detected from provided credentials
 func New(opts ...Option) (*Client, error) {
 	client := &Client{
-		baseURL:     DefaultBaseURL,
-		rateLimiter: rate.NewLimiter(rate.Every(24*time.Hour/DefaultRateLimit), 1),
-		cache:       NewInMemoryCache(),
-		logger:      nil, // No logging by default (library pattern)
+		baseURL:           DefaultBaseURL,
+		rateLimiter:       rate.NewLimiter(rate.Every(24*time.Hour/DefaultRateLimit), 1),
+		rateLimitBehavior: RateLimitWait, // Default: wait for rate limiter
+		cache:             NewInMemoryCache(),
+		logger:            nil, // No logging by default (library pattern)
 	}
 
 	// Apply options (sets authentication credentials and other config)

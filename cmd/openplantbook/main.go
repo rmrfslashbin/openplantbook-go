@@ -168,7 +168,9 @@ Examples:
   openplantbook details monstera-deliciosa --json`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			pid := args[0]
+			// Normalize PID: convert hyphens to spaces (e.g., "monstera-deliciosa" -> "monstera deliciosa")
+			// This allows users to use either format for convenience
+			pid := strings.ReplaceAll(args[0], "-", " ")
 
 			client, err := createClient()
 			if err != nil {

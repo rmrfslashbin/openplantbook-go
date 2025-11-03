@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 // Common sentinel errors
@@ -70,6 +71,21 @@ type ConfigError struct {
 // Error implements the error interface
 func (e *ConfigError) Error() string {
 	return fmt.Sprintf("configuration error: %s", e.Message)
+}
+
+// ErrRateLimited indicates the rate limit has been exceeded
+// This error is returned when RateLimitBehavior is set to RateLimitError
+// and a request would exceed the configured rate limit.
+type ErrRateLimited struct {
+	RetryAfter time.Time // When the next request can be made
+	Message    string
+}
+
+// Error implements the error interface
+func (e *ErrRateLimited) Error() string {
+	return fmt.Sprintf("rate limit exceeded: %s (retry after %s)",
+		e.Message,
+		e.RetryAfter.Format(time.RFC3339))
 }
 
 // newAPIError creates an APIError from an HTTP response

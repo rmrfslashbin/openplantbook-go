@@ -96,6 +96,24 @@ func DisableRateLimit() Option {
 	}
 }
 
+// WithRateLimitBehavior sets how the client handles rate limiting
+//
+// RateLimitWait (default): Blocks until the rate limiter allows the request
+// RateLimitError: Returns a RateLimitError immediately when rate limited
+//
+// Example:
+//
+//	client, _ := openplantbook.New(
+//	    openplantbook.WithAPIKey(apiKey),
+//	    openplantbook.WithRateLimitBehavior(openplantbook.RateLimitError),
+//	)
+func WithRateLimitBehavior(behavior RateLimitBehavior) Option {
+	return func(c *Client) error {
+		c.rateLimitBehavior = behavior
+		return nil
+	}
+}
+
 // Logger is the interface for optional logging injection
 // Implemented by slog.Logger, logrus, zap, etc.
 type Logger interface {
