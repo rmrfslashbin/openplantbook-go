@@ -7,9 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.2] - 2025-11-03
+
+### Fixed
+- Version constant now correctly reflects the release version (was "1.1.0", now "1.1.2")
+
+## [1.1.1] - 2025-11-03
+
 ### Added
 - Public `Version` constant for SDK consumers to reference the library version
 - User-Agent header in HTTP requests for API tracking (`openplantbook-go/{version}`)
+
+### Known Issues
+- Version constant incorrectly set to "1.1.0" instead of "1.1.1" (fixed in v1.1.2)
 
 ## [1.1.0] - 2025-11-03
 
