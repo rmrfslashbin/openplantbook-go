@@ -57,21 +57,15 @@ The SDK enforces **exactly ONE** authentication method:
    ```
    **Result**: Success - Returns results
 
-### ⚠️ Known Issue
+4. **Plant Details**
+   ```bash
+   ./bin/openplantbook details "monstera friedrichsthalii"
+   ```
+   **Result**: Success - Returns full plant details using OAuth2 from .env file
 
-**Plant Detail Endpoint with OAuth2**
-- Endpoint: `/api/v1/plant/detail/{pid}`
-- Behavior: Returns HTTP 301 (Redirect) with OAuth2 Bearer token
-- Works correctly with API Key authentication
-- Possible causes:
-  - OAuth2 client not following redirects
-  - API endpoint treats OAuth2 and API Key differently
-  - SSL/TLS redirect handling issue
+### ✅ All Tests Passing
 
-This is **NOT a critical issue** because:
-- API Key authentication works perfectly for all read operations
-- OAuth2 is primarily needed for write operations (which aren't publicly documented)
-- Users can use API Key for plant search and details (v1.0.0 scope)
+Both OAuth2 and API Key authentication work correctly for all available endpoints.
 
 ## Available Endpoints
 
@@ -103,13 +97,13 @@ However, these endpoints are **not publicly documented** and return 404 when tes
 1. **For v1.0.0 Release**:
    - ✅ OAuth2 authentication is fully working
    - ✅ CLI supports both API Key and OAuth2
-   - ✅ All documented endpoints accessible
-   - ⚠️ Detail endpoint redirect issue is non-critical (API Key works)
+   - ✅ All documented endpoints accessible with both auth methods
+   - ✅ Production ready
 
 2. **For Future Versions**:
-   - Investigate HTTP 301 redirect handling in OAuth2 client
    - Contact API maintainers about undocumented write endpoints
    - Add support for additional endpoints when they become available
+   - The "write" scope in OAuth2 token suggests future write operations
 
 ## Configuration Example
 
@@ -138,4 +132,4 @@ openplantbook search monstera
 
 ## Conclusion
 
-**OAuth2 authentication is production-ready** and fully integrated into the SDK and CLI. While there's a minor redirect issue with the detail endpoint when using OAuth2, this doesn't impact functionality since API Key authentication works perfectly for all current read operations.
+**OAuth2 authentication is production-ready** and fully integrated into the SDK and CLI. Both OAuth2 and API Key authentication work correctly for all documented API endpoints (search and details). The implementation is complete, tested, and ready for production use.
