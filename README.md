@@ -399,7 +399,7 @@ Please ensure:
 
 ## Versioning
 
-This project uses Semantic Versioning (SemVer) until v1.0.0, then switches to Calendar Versioning (CalVer: YYYY.MM.DD).
+This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (SemVer).
 
 ## License
 

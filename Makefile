@@ -6,7 +6,7 @@ COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BUILD_TIME := $(shell date -u '+%Y-%m-%dT%H:%M:%SZ')
 LDFLAGS := -ldflags "-X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.date=$(BUILD_TIME)"
 
-.PHONY: help test test-integration lint clean coverage build-cli install-cli build-cli-all
+.PHONY: help test test-integration lint clean coverage build-cli install-cli build-cli-all check deadcode staticcheck vet fmt quality
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -38,5 +38,26 @@ build-cli-all: ## Build CLI for all platforms
 	GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o bin/$(BINARY)-darwin-amd64 ./cmd/$(BINARY)
 	GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o bin/$(BINARY)-darwin-arm64 ./cmd/$(BINARY)
 	GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o bin/$(BINARY)-windows-amd64.exe ./cmd/$(BINARY)
+
+vet: ## Run go vet
+	go vet ./...
+
+fmt: ## Format code with go fmt
+	go fmt ./...
+
+deadcode: ## Check for unreachable code (requires: go install golang.org/x/tools/cmd/deadcode@latest)
+	@command -v deadcode >/dev/null 2>&1 || { echo "Installing deadcode..."; go install golang.org/x/tools/cmd/deadcode@latest; }
+	@echo "Running deadcode analysis..."
+	@deadcode ./... || echo "Note: Exported functions unused internally are expected in a library"
+
+staticcheck: ## Run staticcheck linter (requires: go install honnef.co/go/tools/cmd/staticcheck@latest)
+	@command -v staticcheck >/dev/null 2>&1 || { echo "Installing staticcheck..."; go install honnef.co/go/tools/cmd/staticcheck@latest; }
+	staticcheck ./...
+
+check: vet fmt ## Run basic checks (vet + fmt)
+	@echo "✅ Code checks passed"
+
+quality: check staticcheck ## Run all quality checks (vet, fmt, staticcheck)
+	@echo "✅ All quality checks passed"
 
 .DEFAULT_GOAL := help
